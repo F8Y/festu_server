@@ -1,13 +1,20 @@
 from fastapi import APIRouter, Header, HTTPException
+from app.core.config import RATE_LIMIT
 from app.services.validator import validate_headers, send_request_to_festu
 from app.services.week_parser import get_week_range
 from app.services.html_parser import extract_week_schedule
 from app.services.json_parser import parse_schedule_to_json
+from app.core.limiter import limiter
+from slowapi.errors import RateLimitExceeded
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
 @router.post("/")
+@limiter.limit(RATE_LIMIT)
 async def validate_and_fetch(
+        request: Request,
         Time: str = Header(...),
         GroupID: int = Header(...)
 ):
