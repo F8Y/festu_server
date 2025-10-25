@@ -1,70 +1,57 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 
 
 class TeacherInfo(BaseModel):
+    """Информация о преподавателе"""
+    model_config = ConfigDict(extra='allow')
+
     name: str = Field(..., description="ФИО преподавателя")
     email: Optional[str] = Field(None, description="Email преподавателя")
 
 
 class PairInfo(BaseModel):
-    number: Optional[int] = Field(None, description="Номер пары(1 - 6)")
-    time: Optional[str] = Field(None, description="Время пары (начало - конец)")
+    """Информация о паре"""
+    model_config = ConfigDict(extra='allow')
+
+    number: Optional[int] = Field(None, description="Номер пары (1-6)")
+    time: Optional[str] = Field(None, description="Время пары (например, '8:05-9:35')")
     subject: str = Field(..., description="Название предмета")
     auditorium: str = Field(..., description="Номер аудитории")
     group: str = Field(..., description="Номер группы")
     teacher: TeacherInfo = Field(..., description="Информация о преподавателе")
-    comment: Optional[str] = Field(None, description="Комментарий")
+    comment: Optional[str] = Field(None, description="Комментарий (например, тип пары)")
 
 
 class DaySchedule(BaseModel):
-    Time: str = Field(..., description="Дата в формате dd.mm.yyyy")
+    """Расписание на один день"""
+    model_config = ConfigDict(extra='allow')
+
+    date: str = Field(..., description="Дата в формате dd.mm.yyyy")
     day: str = Field(..., description="Название дня недели")
-    pairs: List[PairInfo] = Field(..., description="Список пар на день")
+    pairs: List[PairInfo] = Field(..., description="Список пар в этот день")
 
 
 class ScheduleResponse(BaseModel):
-    week: str = Field(..., description="Диапазон недели (начало - конец)")
-    days: List[DaySchedule] = Field(..., description="Расписание по дням")
+    """Полное расписание на неделю"""
+    model_config = ConfigDict(extra='allow')
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "week": "14.10.2025-20.10.2025",
-                "days": [
-                    {
-                        "Time": "14.10.2025",
-                        "day": "Понедельник",
-                        "pairs": [
-                            {
-                                "number": 1,
-                                "time": "8:05-9:35",
-                                "subject": "Анализ",
-                                "auditorium": "202",
-                                "group": "И41",
-                                "teacher": {
-                                    "name": "Гладкий Д.В.",
-                                    "email": "gldv@mail.ru"
-                                },
-                                "comment": "Лекция"
-                            }
-                        ]
-                    }
-                ]
-            }
-        }
+    week: str = Field(..., description="Диапазон недели (например, '14.10.2025–20.10.2025')")
+    days: List[DaySchedule] = Field(..., description="Расписание по дням")
 
 
 class ScheduleRequest(BaseModel):
+    """Параметры запроса расписания"""
     group_id: int = Field(..., gt=0, description="ID группы")
-    Time: str = Field(..., description="Дата в формате dd.mm.yyyy")
+    time: str = Field(..., description="Дата в формате dd.mm.yyyy")
 
-    @field_validator("Time")
+    @field_validator("time")
     @classmethod
-    def validate_date_format(cls, v: str) -> str:
+    def validate_time_format(cls, v: str) -> str:
+        """Валидация формата даты"""
         try:
             datetime.strptime(v, "%d.%m.%Y")
         except ValueError:
-            raise ValueError("Date must be in format dd.mm.yyyy")
+            raise ValueError("Time must be in format dd.mm.yyyy")
         return v

@@ -5,6 +5,15 @@ from app.core.limiter import limiter
 from slowapi.errors import RateLimitExceeded
 from fastapi import Request
 from fastapi.responses import JSONResponse
+import logging
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)
 
 # Создаем приложение
 app = create_app()
@@ -29,4 +38,5 @@ if ENABLE_RATE_LIMIT:
 if __name__ == "__main__":
     import uvicorn
 
+    logger.info("Starting FESTU Schedule API server...")
     uvicorn.run(app, host="0.0.0.0", port=8000)
